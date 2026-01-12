@@ -348,7 +348,7 @@ const Register: React.FC = () => {
                                     className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5"
                                 />
                                 <label htmlFor="acceptTerms" className="ml-3 text-sm text-gray-700">
-                                        <span className="text-[20px]">I agree to the</span>{' '}
+                                    <span className="text-[20px]">I agree to the</span>{' '}
                                     <a href="/terms" className="text-blue-600 hover:text-blue-800 font-medium">
                                         Terms of Service
                                     </a>{' '}

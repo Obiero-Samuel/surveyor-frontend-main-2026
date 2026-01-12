@@ -1,41 +1,114 @@
-
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Provider, useSelector } from 'react-redux';
-import { store, RootState } from './store/store';
+import React, { Suspense, lazy } from 'react';
+import AnimatedGradient from './components/backgrounds/AnimatedGradient';
+import ParticleBackground from './components/backgrounds/ParticleBackground';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Header from './components/common/Header';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Surveys from './pages/Surveys';
-import SurveyDetail from './pages/SurveyDetail';
+import LoadingSpinner from './components/common/LoadingSpinner';
+import { useAuth } from './hooks/useAuth';
 
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
-    const { user } = useSelector((state: RootState) => state.auth);
-    return user ? children : <Navigate to="/login" />;
+// Lazy load pages for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Surveys = lazy(() => import('./pages/Surveys'));
+const SurveyDetail = lazy(() => import('./pages/SurveyDetail'));
+
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-const AppRoutes = () => (
-    <>
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-            <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                <Route path="/surveys" element={<PrivateRoute><Surveys /></PrivateRoute>} />
-                <Route path="/surveys/:id" element={<PrivateRoute><SurveyDetail /></PrivateRoute>} />
-            </Routes>
-        </main>
-    </>
-);
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
+    return !isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+};
 
-const App = () => (
-    <Provider store={store}>
-        <Router>
-            <AppRoutes />
-        </Router>
-    </Provider>
-);
+function App() {
+    return (
+        <div className="relative min-h-screen overflow-x-hidden">
+            {/* Animated creative backgrounds */}
+            <div className="fixed inset-0 -z-10 pointer-events-none">
+                <AnimatedGradient />
+                <ParticleBackground particleCount={80} />
+            </div>
+
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#363636',
+                        color: '#fff',
+                    },
+                    success: {
+                        duration: 3000,
+                        iconTheme: {
+                            primary: '#10B981',
+                            secondary: '#fff',
+                        },
+                    },
+                    error: {
+                        duration: 4000,
+                        iconTheme: {
+                            primary: '#EF4444',
+                            secondary: '#fff',
+                        },
+                    },
+                }}
+            />
+
+            <Header />
+
+            <main className="container mx-auto px-4 py-8">
+                <Suspense fallback={<LoadingSpinner fullScreen />}>
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={
+                                <PrivateRoute>
+                                    <Dashboard />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/login"
+                            element={
+                                <PublicRoute>
+                                    <Login />
+                                </PublicRoute>
+                            }
+                        />
+                        <Route
+                            path="/register"
+                            element={
+                                <PublicRoute>
+                                    <Register />
+                                </PublicRoute>
+                            }
+                        />
+                        <Route
+                            path="/surveys"
+                            element={
+                                <PrivateRoute>
+                                    <Surveys />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/surveys/:id"
+                            element={
+                                <PrivateRoute>
+                                    <SurveyDetail />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Suspense>
+            </main>
+        </div>
+    );
+}
 
 export default App;
